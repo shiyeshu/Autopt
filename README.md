@@ -76,7 +76,7 @@ pip install -e .
 项目支持集成各类渗透测试工具，默认工具路径为 `D:/project/autopt/aptools/`。支持的不太偏门的几乎所有工具。冷门工具也支持，但可能消耗大量轮次和token
 
 6. **修改代码中的路径**
-修改
+  修改
 ```
 gui_app.py:
 log_path = r"D:/project/autopt/mission.log"
@@ -108,7 +108,7 @@ python .\team\src\team\gui_app.py
 
 访问 `http://localhost:8080` 使用图形化界面进行操作。
 
-** 注意：建议修改源码中所有的绝对路径值**
+**注意：建议修改源码中所有的绝对路径值**
 
 ## 项目结构
 
@@ -150,7 +150,7 @@ AutoPT/
 7. **循环执行** - 重复步骤2-6直到达成目标
 8. **报告生成** - 审计员生成最终测试报告
 
-![report1](.\images\report1.png)
+![report1](./images/report1.png)
 
 
 
@@ -158,7 +158,7 @@ AutoPT/
 
 
 
-![report2](.\images\report2.png)
+![report2](./images/report2.png)
 
 
 
