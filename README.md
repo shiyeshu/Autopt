@@ -8,6 +8,8 @@
 
 AutoPT是一个基于CrewAI框架开发的自动化网络安全渗透测试工具。通过多个专业AI代理的协作，实现智能化的渗透测试流程自动化，帮助安全研究人员和渗透测试人员提高工作效率。本项目吸收了xbow的多agent、多模型协作特点，以实现AI能效最大化。但不同的是没有像多数渗透agent一样将提示词细化到具体操作、具体工具，这样做的目的是提高通用性，实现真正的AI智能化。
 
+![image-20251226111055995](./images/image-20251226111055995.png)
+
 ## 多Agent编排
 1. **渗透任务指挥官 (Strategist)**
    - 基于日志制定下一步攻击策略
@@ -93,7 +95,7 @@ tasks.yaml、agents.yaml提示词中包含的路径
 
 ```bash
 # 启动Web界面
-python main.py
+python .\team\src\team\main.py 
 ```
 
 
@@ -101,7 +103,7 @@ python main.py
 
 ```bash
 # 启动Web界面
-python gui_app.py
+python .\team\src\team\gui_app.py 
 ```
 
 访问 `http://localhost:8080` 使用图形化界面进行操作。
@@ -147,6 +149,18 @@ AutoPT/
 6. **日志记录** - 书记员记录执行结果
 7. **循环执行** - 重复步骤2-6直到达成目标
 8. **报告生成** - 审计员生成最终测试报告
+
+![report1](.\images\report1.png)
+
+
+
+
+
+
+
+![report2](.\images\report2.png)
+
+
 
 ## 配置说明
 
