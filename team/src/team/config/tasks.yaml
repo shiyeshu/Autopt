@@ -1,0 +1,78 @@
+# tasks.yaml 修正版
+
+strategy_task:
+  description: >
+    当前目标: {target}
+    全局战况历史: {mission_history}
+    
+    1. **必须调用** `Encoded File Read Tool` 查看读取D:/project/autopt/mission.log日志。
+    2. 分析当前渗透阶段。如果是第一轮任务，日志可能为空，你需要直接制定初始战术然后交给 deputy 进行执行
+    3. 制定下一步的单一战术。
+    4. 尽量扩大战果，如果有可能存在风险的路径，优先进行尝试。
+    5. 每轮只读取一次日志，避免冗余读取。
+  expected_output: >
+    简短的战术意图描述。
+
+deputy_task:
+  description: >
+    接收战略意图（上下文会自动提供），将其转化为技术需求。
+    确保你的输出能指导 Operator 去搜索特定类型的工具。
+  expected_output: >
+    单一的技术任务需求。
+
+operator_task:
+  description: >
+    接收 Deputy 的需求。
+    
+    **强制步骤**：
+    1. **必须调用** `工具查看器` 查看当前的工具文件夹(D:/project/autopt/aptools/)，只能传递一个subdir参数，参数为子目录名称。调用得到的结果会包含文件和子目录列表。只能传递一个参数，每次只能查看一个目录。
+    2. 结合 Deputy 给定的类型选择文件夹中可用的工具。
+    3. 获取该工具的绝对路径。
+    4. 使用获取的【绝对路径】和目标 IP {target} 构造命令。
+    5. 检查命令中是否还有 <target> 占位符，如果有，替换掉。
+  expected_output: >
+    一条包含绝对路径、无占位符的可执行命令字符串。不得输出空内容，如果为空则输出"无命令"。如果没有生成命令行，则重新尝试生成，直到生成命令行。
+
+auditor_task:
+  description: >
+    接收上一步 Operator 生成的命令。如果没有命令，输出“无正确命令”并结束任务。
+    
+    **执行协议 (必须严格遵守)**:
+    1. 快速检查命令是否存在 `rm -rf` 等高危操作。
+       快速检查命令是否调用了动态刷新的命令行工具，如果是请使用静默输出参数。比如dirsearch可以添加 “-q --no-color” 来关闭颜色和进度条。
+       快速检查命令如果是系统自带的工具，如curl、ping等，可以不拼接绝对路径直接使用，因为工具已经添加进环境变量。
+       禁止使用可能消耗长时间的命令
+    2. **关键步骤**: **当以上检查通过后，你必须调用 `执行器` 工具** 来实际运行该命令。
+    3. 等待工具运行结束。
+    4. 获取工具返回的 `stdout` 和 `stderr`。
+    
+    **警告**: 
+    - 不要试图模拟命令运行结果！
+    - 必须让工具实际运行！
+    - 你的回答必须是工具返回的原始文本。
+  expected_output: >
+    工具执行后产生的原始 STDOUT/STDERR 内容。不要添加你的个人评论,不要添加函数描述。不包含“You ONLY have access to the following..."的说明文字。
+
+logger_task:
+  description: >
+
+    1. **必须调用** `Encoded File Writer Tool` 将上一步的结果追加写入日志mission.log文件。
+    2. 使用`Encoded File Writer Tool` 写入文件，必须传入以下参数：
+    - filename: D:/project/autopt/mission.log
+    - content: 【auditor 得到的结果】
+    - overwrite: False
+  expected_output: >
+    **必须调用** `Encoded File Writer Tool` 将摘要追加写入日志D:/project/autopt/mission.log文件。如果没有调用则输出“写入失败”。
+
+reporting_task:
+  description: >
+    执行以下严格的操作步骤：
+    1. **读取阶段**：调用 `Encoded File Read Tool` 读取文件 `D:/project/autopt/mission.log`。
+    2. **验证阶段**：检查读取到的内容。如果内容为空、无法读取或仅包含空白字符，必须直接输出且仅输出字符串：“## 任务日志分析\n\n**结果**：日志文件为空或无法读取。”，并结束任务。
+    3. **处理阶段**：如果内容存在，逐行提取关键信息（如 IP、端口、漏洞名称）。
+    4. **生成阶段**：生成 Markdown 报告。
+       - **规则一**：报告中提及的每一个 IP、每一个端口，都必须能在原始日志文本中找到完全一致的对应项。
+       - **规则二**：如果日志中未提及任何漏洞，报告中必须明确写“未发现漏洞”，不得编造常见漏洞。
+    5. 调用** `Encoded File Writer Tool` 将最终报告追加写入 `D:/project/autopt/final_report.md`。
+  expected_output: >
+    一份基于事实的 Markdown 报告。如果日志为空，则输出失败声明。报告必须包含“数据来源校验”章节，证明所有数据均来自日志文件。
