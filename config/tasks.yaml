@@ -1,0 +1,132 @@
+# tasks.yaml 修正版
+
+strategy_task:
+  description: >
+    当前目标: {target}
+    全局战况历史: {mission_history}
+    
+    1. **必须调用** `file_read_tool` 查看读取./mission.log日志。
+    2. 分析当前渗透阶段。如果是第一轮任务，日志可能为空，你需要直接制定初始战术然后交给 deputy 进行执行
+    3. 制定下一步的单一战术。
+    4. 尽量扩大战果，如果有可能存在风险的路径，优先进行尝试。
+    5. 每轮只读取一次日志，避免冗余读取。
+  expected_output: >
+    简短的战术意图描述。
+
+deputy_task:
+  description: >
+    接收战略意图（上下文会自动提供），将其转化为技术需求。
+    确保你的输出能指导 Operator 去搜索特定类型的工具。
+  expected_output: >
+    单一的技术任务需求。
+
+operator_task:
+  description: >
+    接收 Deputy 的需求。
+    
+    **强制步骤**：
+    1. 分析是否可以使用系统自带的命令行工具（如 curl、ping、wget 等）来满足 Deputy 的需求。如果可以，直接生成命令并输出。
+    1. 调用 `list_custom_tool` 查看当前的工具文件夹(./aptools/)，只能传递一个subdir参数，参数为子目录名称。调用得到的结果会包含文件和子目录列表。只能传递一个参数，每次只能查看一个目录。
+    - 选择工具时，查看根目录获得工具文件夹列表，从其中进行选择，不用查看子目录中的内容。
+    - 决定使用哪个工具后，获取该工具执行文件的绝对路径。
+    2. 结合 Deputy 给定的类型选择文件夹中可用的工具。
+    3. 获取该工具的绝对路径。
+    4. 使用获取的【绝对路径】和目标 IP {target} 构造命令。
+    5. 检查命令中是否还有 <target> 占位符，如果有，替换掉。生成命令输出。
+  expected_output: >
+    一条包含绝对路径、无占位符的可执行命令字符串。不得输出空内容，如果为空则输出"无命令"。如果没有生成命令行，则重新尝试生成，直到生成命令行。
+
+auditor_task:
+  description: >
+    接收上一步 Operator 生成的命令。如果没有命令，输出“无正确命令”并结束任务。
+    
+    **执行流程 (必须严格遵守)**:
+    1. 
+       - 检查命令是否存在 `rm -rf`、'删除系统文件' 等高危操作，如果有则拒绝执行。
+       - 检查命令是否调用了动态刷新的命令行工具，如果是请使用静默输出参数。比如dirsearch可以添加 “-q --no-color” 来关闭颜色和进度条。
+       - 检查命令如果是系统自带的工具，不拼接绝对路径，调用`execution_tool`，传递cmd或者bash的方式运行使用，如cmd /c ping <target>或者bash -c "ping <target>"。如果是其他工具，必须使用绝对路径调用`execution_tool`。
+       - 禁止使用可能消耗长时间的命令,比如 nmap 全端口扫描时未添加优化参数。
+       - 禁止生成交互式命令，比如ssh登录等需要人工交互的命令。尽量使用无交互的命令或者添加参数实现非交互式，一次性执行命令。
+       - **关键步骤**: **当以上检查通过后，你必须调用 `execution_tool` 工具** 来实际运行该命令。
+    2. 获取工具返回的 `stdout` 和 `stderr`。
+    
+    【注意事项】:
+    1. 你**必须**在代码层面调用 `execution_tool` 工具。
+    2. 你**禁止**预测命令的输出结果，只能返回 `execution_tool` 的实际输出。
+    3. 如果工具报错，你就报告报错信息。
+    4. 如果工具没有输出，你就报告“无输出”。
+
+    **警告**: 
+    - 不要试图模拟命令运行结果！
+    - 必须调用 `execution_tool` 工具运行命令！
+    - 你的回答必须是工具返回的原始文本。
+    - 禁止输出大于1000字的内容，如果工具输出过长，请截取前1000字并注明“输出过长，已截断”。
+  expected_output: >
+    调用工具执行。如果没有调用工具则视为失败。
+
+
+reporting_task:
+  description: >
+    **处理完整日志文件**：
+    
+    1. 调用 `file_read_tool` 读取 "mission.log"：
+       filename: "mission.log"
+    
+    2. **日志已完整返回**（包含所有 CMD、STDOUT），从中提取：
+       - 执行轮次数量
+       - 每个轮次的命令和关键输出
+       - nmap/dirsearch 等扫描的具体发现（端口列表、服务版本）
+    
+    3. 生成 Markdown 报告：
+       ```
+       # 渗透测试汇总
+       
+       ## 目标
+       10.0.86.178
+       
+       ## 扫描发现
+       | 端口 | 服务 | 状态 |
+       | 25/tcp | smtp | filtered |
+       | 53/tcp | domain | open |
+       | 135/tcp | msrpc | open |
+       ...
+       
+       ## 执行记录
+       - 轮次1: nmap 全端口扫描 (80s)
+       - 轮次2: fscan Web 服务探测 (5s)
+       ...
+       ```
+    
+    4. 调用 `file_write_tool` 写入 "final_report.md"。
+    
+    **注意**：
+    - mission.log 包含完整 STDOUT，不要说“前500字符”。
+    - 优先提取 nmap 的 PORT/STATE/SERVICE 表格。
+    
+  expected_output: >
+    Markdown 报告写入成功。
+
+
+
+
+html_reporting_task:
+  description: >
+    **基于数据表撰写专业报告**：
+    
+    1. 调用 `file_read_tool` 读取 "final_report.md"。
+    
+    2. 将表格数据转化为**流畅的叙述**：
+       - **Executive Summary**：总结目标、轮次数、主要发现。
+       - **Methodology**：描述执行的扫描工具和技术。
+       - **Findings**：将表格数据转化为段落，例如：
+         "本次测试共执行 3 轮扫描，发现目标主机开放 SSH(22)、HTTP(80) 服务。"
+       - **Recommendations**：基于发现给出建议。
+    
+    3. 嵌入指定的 CSS，生成 "final_report.html"。
+    
+    **约束**：
+    - 所有数据必须来自 MD 表格。
+    - 不要引用原始日志，直接用汇总数据。
+    
+  expected_output: >
+    HTML 报告写入成功。
