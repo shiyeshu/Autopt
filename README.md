@@ -1,4 +1,4 @@
-# AutoPT 2.0 - 基于CrewAI的自动化渗透测试工具
+# AutoPT 2.0 - 具有普适性的AI自动化渗透测试工具
 
 [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
 [![Framework](https://img.shields.io/badge/CrewAI-1.6.1-green.svg)](https://crewai.com)
