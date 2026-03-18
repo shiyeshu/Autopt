@@ -31,39 +31,74 @@ class ExecutionToolInput(BaseModel):
 
 @tool(args_schema=ExecutionToolInput)
 def execution_tool(cmd: str) -> str:
-    """用于执行系统shell命令，返回执行结果。"""
-    
-    command = cmd.replace("\\", "/") 
-    print(f"\n[SYSTEM TOOL] ⚡ 正在执行: {command}")
-    
-    # 黑名单检查
-    forbidden = ["rm -rf", "mkfs", "shutdown", "format"]
-    if any(f in command for f in forbidden):
-        return "SECURITY ALERT: Command blocked."
-    
+    """执行 shell 命令并返回输出，同时把结果写入 mission.log。"""
+    command = cmd.replace("`", "").strip()
+
+    print(f"[SYSTEM TOOL] Received command: {command}")
+
+    forbidden_patterns = [
+        r"rm\s+-rf",
+        r"del\s+/",
+        r"shutdown",
+        r"mkfs",
+        r":[\s]*\(\)\s*{",
+    ]
+    command_lower = command.lower()
+
+    for pattern in forbidden_patterns:
+        if re.search(pattern, command_lower, re.IGNORECASE):
+            print(f"[SECURITY ALERT] Blocked command: {command}")
+            return "SECURITY ALERT: Command blocked due to security policy."
+
     try:
         start_time = time.time()
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=500, encoding='gbk', errors='replace')
-        
+
+        result = subprocess.run(
+            command,
+            shell=True,
+            capture_output=True,
+            timeout=500,
+        )
+
         duration = time.time() - start_time
-        
-        # 写完整日志
-        log_entry = f"=== [{time.strftime('%Y-%m-%d %H:%M:%S')}] {command} ===\nTime: {duration:.2f}s\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}\n{'='*80}\n"
-        
+
+        stdout_text = result.stdout.decode("utf-8", errors="replace")
+        stderr_text = result.stderr.decode("utf-8", errors="replace")
+
+        DEBUG_THINK_BUG = os.getenv("DEBUG_THINK_BUG", "true").lower() == "true"
+        if DEBUG_THINK_BUG:
+            stdout_text = stdout_text.replace("<think", "<th_ink").replace("</think>", "</th_ink>")
+            stderr_text = stderr_text.replace("<think", "<th_ink").replace("</think>", "</th_ink>")
+
+        log_entry = (
+            f"\n[EXECUTION TOOL]\n"
+            f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"Command: {command}\n"
+            f"Duration: {duration:.2f}s\n"
+            f"STDOUT:\n{stdout_text}\n"
+            f"STDERR:\n{stderr_text}\n"
+            + "=" * 80
+            + "\n"
+        )
+
         log_path = os.getenv("LOG_FILE_PATH", "mission.log")
-        with open(log_path, "a", encoding="utf-8") as log_file:
-            log_file.write(log_entry)
-            log_file.flush()
-        
-        # 【关键】：返回极简信息，不触发前端日志
-        return f"执行完成 ({duration:.1f}s)"
-        
+        with open(log_path, "a", encoding="utf-8") as logfile:
+            logfile.write(log_entry)
+            logfile.flush()
+
+        if stdout_text.strip():
+            return f"执行完成 ({duration:.1f}s)\n{stdout_text}"
+        elif stderr_text.strip():
+            return f"执行完成 ({duration:.1f}s)\n{stderr_text}"
+        else:
+            return f"执行完成 ({duration:.1f}s) - 无标准输出"
+
     except Exception as e:
-        # 错误也只写文件
         log_path = os.getenv("LOG_FILE_PATH", "mission.log")
-        with open(log_path, "a", encoding="utf-8") as log_file:
-            log_file.write(f"ERROR: {command}\n{str(e)}\n{'='*80}\n")
+        with open(log_path, "a", encoding="utf-8") as logfile:
+            logfile.write(f"[ERROR] Command failed: {command}\n{str(e)}\n{'=' * 80}\n")
         return f"执行失败: {str(e)}"
+
 
 
 

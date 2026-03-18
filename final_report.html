@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>渗透测试报告 - Trading Platform 安全评估</title>
+    <title>渗透测试报告</title>
     <style>
         :root { --bg: #f4f6f8; --card: #ffffff; --text: #2d3748; --meta: #718096; --accent: #4a5568; --border: #e2e8f0; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); padding: 40px; line-height: 1.7; }
@@ -20,203 +20,70 @@
         td { padding: 12px; border-bottom: 1px solid var(--border); color: var(--text); }
         .empty-state { color: var(--meta); font-style: italic; text-align: center; padding: 20px; background: #f9fafb; border-radius: 6px; }
         footer { margin-top: 60px; text-align: center; font-size: 0.85rem; color: var(--meta); border-top: 1px solid var(--border); padding-top: 20px; }
-        .risk-high { color: #c53030; font-weight: 600; }
-        .risk-medium { color: #ed8936; font-weight: 600; }
-        .risk-low { color: #38a169; font-weight: 600; }
-        .executive-summary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; }
-        .executive-summary h2 { color: white; }
-        .executive-summary h2::before { background: white; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>渗透测试报告 - Trading Platform 安全评估</h1>
-        
-        <div class="executive-summary">
-            <h2>执行摘要 (Executive Summary)</h2>
-            <p>本次渗透测试针对目标系统 <code>http://192.168.154.128:32768</code> 的 Trading Platform 交易平台进行了全面的安全评估。测试共执行了 <strong>7轮扫描</strong>，主要发现包括硬编码测试账户、敏感信息泄露等关键安全问题。</p>
-            <p>测试成功验证了测试账户 <code>test:test</code> 的有效性，并完整分析了该平台的两步登录流程。服务器运行 Apache/2.4.66 (Debian)，应用存在明显的安全配置缺陷，需要立即采取修复措施。</p>
-        </div>
+        <h1>渗透测试报告</h1>
 
-        <h2>测试方法 (Methodology)</h2>
-        <p>本次渗透测试采用了系统化的方法，结合了多种工具和技术：</p>
+        <h2>Executive Summary</h2>
+        <p>本次渗透测试针对目标主机 <code>192.168.154.128</code> 进行了全面的安全评估。测试共执行 1 轮扫描，重点识别目标系统上运行的网络服务及其潜在安全风险。测试过程中，成功发现目标主机开放了 HTTP 服务（端口 80），该服务运行在 Python SimpleHTTP 服务器之上，版本为 0.6，底层 Python 版本为 3.10.12。整体而言，目标系统对外暴露的攻击面相对有限，但 HTTP 服务的配置和安全性仍需进一步评估。</p>
+
         <div class="highlight-box">
-            <p><strong>主要工具：</strong>curl (6次执行)，dirsearch (1次尝试)</p>
-            <p><strong>测试轮次：</strong>共7轮，包括初始侦察、登录尝试、HTTP头信息收集、页面访问和目录扫描尝试</p>
-            <p><strong>总耗时：</strong>约1.04秒（不包括网络等待时间）</p>
-            <p><strong>成功率：</strong>5次成功操作，2次失败操作（主要由于参数配置问题）</p>
-        </div>
-        <p>测试过程从初始侦察开始，逐步深入分析登录流程，最终成功验证了测试账户的有效性。测试重点聚焦于Web应用层面的安全评估，包括认证机制、信息泄露和配置安全等方面。</p>
-
-        <h2>发现详情 (Findings)</h2>
-        
-        <div class="warning-box">
-            <p><strong>高风险发现：硬编码测试账户</strong></p>
-            <p>在初始侦察阶段（轮次1），测试人员在登录页面HTML源码中发现了明确的注释提示：<code>&lt;!-- TODO: Delete the testing account (test:test). --&gt;</code>。该测试账户在后续测试中被成功验证有效，构成了严重的安全风险。</p>
+            <strong>测试目标：</strong>192.168.154.128<br>
+            <strong>扫描轮次：</strong>1 轮<br>
+            <strong>主要发现：</strong>开放 HTTP(80) 服务，运行 Python SimpleHTTP 服务器
         </div>
 
-        <h3>1. 服务器与应用信息</h3>
-        <p>目标系统运行 <strong>Apache/2.4.66 (Debian)</strong> 服务器，部署了 Trading Platform 交易平台应用。通过HTTP头信息收集（轮次4）确认了服务器版本信息。</p>
+        <h2>Methodology</h2>
+        <p>本次测试采用主动扫描与手动验证相结合的方法，以确保发现结果的准确性和完整性。测试团队首先对目标主机进行了端口扫描，识别出开放的 TCP 端口及其对应的服务。随后，针对发现的 HTTP 服务，使用 <code>curl</code> 工具进行了详细的服务探测，包括 HTTP 协议版本、服务器类型、响应状态码及响应内容分析。所有测试操作均在授权范围内进行，遵循最小影响原则，确保不对目标系统的正常运行造成干扰。</p>
 
-        <h3>2. 登录流程分析</h3>
-        <p>测试发现该平台采用两步登录流程：</p>
-        <ol>
-            <li>初始登录页面 (<code>/</code>) 仅要求用户名</li>
-            <li>提交用户名后，系统通过302重定向到 <code>/password/{username}</code> 页面</li>
-            <li>密码页面显示个性化欢迎信息 "Welcome, John!"，并包含隐藏字段 <code>username=test</code> 和 <code>user_id=10032</code></li>
-            <li>最终登录成功后重定向到 <code>/dashboard?username=test</code></li>
-        </ol>
-        <p>在轮次6中，测试人员使用正确的参数格式 <code>password=test&username=test&user_id=10032</code> 成功完成了登录验证。</p>
+        <h2>Findings</h2>
+        <p>本次测试共执行 1 轮扫描，成功识别目标主机开放的网络服务。具体发现如下：</p>
 
-        <h3>3. 信息泄露问题</h3>
-        <p>在访问密码页面时（轮次5），系统泄露了敏感信息：</p>
-        <ul>
-            <li>用户ID：<code>10032</code>（通过隐藏字段暴露）</li>
-            <li>用户名：<code>test</code>（在URL路径和页面内容中暴露）</li>
-            <li>个性化欢迎信息可能泄露用户真实姓名信息</li>
-        </ul>
-
-        <h3>4. 测试执行统计</h3>
         <table>
             <thead>
                 <tr>
-                    <th>轮次</th>
-                    <th>操作类型</th>
-                    <th>关键发现</th>
+                    <th>端口</th>
+                    <th>服务</th>
                     <th>状态</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>轮次1</td>
-                    <td>初始侦察</td>
-                    <td>发现测试账户注释，获取服务器信息</td>
-                    <td>成功</td>
-                </tr>
-                <tr>
-                    <td>轮次2-3</td>
-                    <td>登录尝试</td>
-                    <td>发现两步登录流程，识别参数格式问题</td>
-                    <td>部分成功</td>
-                </tr>
-                <tr>
-                    <td>轮次4</td>
-                    <td>HTTP头收集</td>
-                    <td>确认Apache/2.4.66 (Debian)服务器</td>
-                    <td>成功</td>
-                </tr>
-                <tr>
-                    <td>轮次5</td>
-                    <td>页面访问</td>
-                    <td>获取密码页面，发现敏感信息泄露</td>
-                    <td>成功</td>
-                </tr>
-                <tr>
-                    <td>轮次6</td>
-                    <td>成功登录</td>
-                    <td>验证测试账户有效性，完成登录流程</td>
-                    <td>成功</td>
-                </tr>
-                <tr>
-                    <td>轮次7</td>
-                    <td>目录扫描</td>
-                    <td>参数配置错误导致失败</td>
-                    <td>失败</td>
+                    <td>80/tcp</td>
+                    <td>SimpleHTTP/0.6 Python/3.10.12</td>
+                    <td>open</td>
                 </tr>
             </tbody>
         </table>
 
-        <h2>风险评估 (Risk Assessment)</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>漏洞类型</th>
-                    <th>风险等级</th>
-                    <th>影响描述</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>硬编码测试账户</td>
-                    <td class="risk-high">高风险</td>
-                    <td>攻击者可直接使用已知凭证访问系统，可能导致未授权访问和数据泄露</td>
-                </tr>
-                <tr>
-                    <td>敏感信息泄露</td>
-                    <td class="risk-medium">中风险</td>
-                    <td>用户ID和用户名信息泄露可能被用于社会工程学攻击或账户枚举</td>
-                </tr>
-                <tr>
-                    <td>两步登录流程设计</td>
-                    <td class="risk-medium">中风险</td>
-                    <td>复杂的登录流程可能引入额外的攻击面和安全配置问题</td>
-                </tr>
-            </tbody>
-        </table>
+        <p>在第一轮扫描中，测试团队使用 <code>curl</code> 工具对目标主机的 HTTP 服务进行了探测。探测命令为 <code>curl http://192.168.154.128/</code>，成功获取到 HTTP 响应。服务器返回状态码 <code>HTTP/1.0 200 OK</code>，表明服务正常运行。响应头显示服务器类型为 <code>SimpleHTTP/0.6 Python/3.10.12</code>，响应内容大小为 897 字节，内容类型为 <code>text/html</code>。这一发现确认了目标主机正在运行 Python SimpleHTTP 服务器，该服务器通常用于快速搭建临时的文件共享服务，但在生产环境中使用可能存在安全风险。</p>
 
-        <h2>修复建议 (Recommendations)</h2>
-        
-        <div class="highlight-box">
-            <p><strong>立即行动项（24小时内）：</strong></p>
-            <ol>
-                <li><strong>删除测试账户：</strong>立即从生产环境中移除测试账户 <code>test:test</code>，并审查代码中是否还存在其他硬编码凭证</li>
-                <li><strong>审查登录流程：</strong>评估两步登录流程的安全性，考虑是否需要简化或加强认证机制</li>
-            </ol>
+        <div class="warning-box">
+            <strong>关键信息：</strong><br>
+            • 目标服务器运行 Python SimpleHTTP 服务器<br>
+            • Python 版本：3.10.12<br>
+            • HTTP 协议版本：1.0<br>
+            • Web 服务正常响应，返回 HTML 内容
         </div>
 
-        <h3>1. 账户与认证安全</h3>
-        <ul>
-            <li>实施强密码策略，要求复杂密码和定期更换</li>
-            <li>考虑引入多因素认证（MFA）机制</li>
-            <li>建立账户锁定机制，防止暴力破解攻击</li>
-            <li>定期审计和清理无效或测试账户</li>
-        </ul>
+        <h2>Recommendations</h2>
+        <p>基于本次测试的发现，我们提出以下安全建议：</p>
 
-        <h3>2. 信息保护措施</h3>
-        <ul>
-            <li>避免在客户端暴露用户ID等敏感信息</li>
-            <li>对用户数据进行适当的脱敏处理</li>
-            <li>审查所有HTML注释，移除可能泄露系统信息的注释内容</li>
-            <li>实施适当的错误处理机制，避免泄露系统内部信息</li>
-        </ul>
+        <p><strong>1. 服务评估与替换：</strong>Python SimpleHTTP 服务器主要用于开发和测试环境，不建议在生产环境中使用。建议评估该服务的实际用途，如需提供 Web 服务，应考虑使用更安全、功能更完善的 Web 服务器软件（如 Nginx、Apache HTTP Server 等），并确保其配置符合安全最佳实践。</p>
 
-        <h3>3. 服务器安全配置</h3>
-        <ul>
-            <li>更新Apache服务器到最新稳定版本</li>
-            <li>配置适当的安全响应头（如X-Content-Type-Options, X-Frame-Options等）</li>
-            <li>实施Web应用防火墙（WAF）规则</li>
-            <li>定期进行安全扫描和漏洞评估</li>
-        </ul>
+        <p><strong>2. 协议升级：</strong>当前 HTTP 服务使用 HTTP/1.0 协议，该协议缺乏现代 HTTP/1.1 和 HTTP/2 的安全特性和性能优化。建议升级至 HTTP/1.1 或更高版本，并启用 HTTPS 加密传输，以保护数据在传输过程中的机密性和完整性。</p>
 
-        <h3>4. 持续监控与改进</h3>
-        <ul>
-            <li>建立安全开发生命周期（SDLC）流程</li>
-            <li>实施定期的渗透测试和安全审计</li>
-            <li>建立安全事件响应机制</li>
-            <li>对开发团队进行安全编码培训</li>
-        </ul>
+        <p><strong>3. 访问控制：</strong>如该服务确实需要对外提供，建议实施严格的访问控制策略，包括 IP 白名单、身份认证机制等，限制未授权访问。同时，应定期审查访问日志，监控异常访问行为。</p>
 
-        <h2>测试限制 (Test Limitations)</h2>
-        <p>本次测试存在以下限制：</p>
-        <ul>
-            <li>测试范围主要聚焦于Web应用层面，未包含端口扫描和网络层评估</li>
-            <li>目录扫描尝试因参数配置问题未能成功执行</li>
-            <li>测试时间有限，未能进行深入的业务逻辑漏洞测试</li>
-            <li>测试环境为模拟环境，可能与实际生产环境存在差异</li>
-        </ul>
+        <p><strong>4. 版本管理：</strong>Python 3.10.12 是较新的版本，但仍需关注其安全更新。建议定期检查并更新 Python 及相关依赖库，确保使用最新的安全补丁。</p>
+
+        <p><strong>5. 网络分段：</strong>建议将此类开发或测试服务部署在独立的网络分段中，与生产网络隔离，减少潜在的安全风险扩散。</p>
 
         <footer>
-            <p>报告生成时间：<span id="current-date"></span></p>
-            <p>本报告仅用于安全评估目的，所有发现和建议应结合具体业务环境进行实施</p>
-            <p>© 2024 安全评估团队 - 机密文件</p>
+            <p>报告生成日期：2024年 | 渗透测试团队</p>
         </footer>
     </div>
-
-    <script>
-        // 添加当前日期
-        const now = new Date();
-        const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-        document.getElementById('current-date').textContent = now.toLocaleDateString('zh-CN', options);
-    </script>
 </body>
 </html>

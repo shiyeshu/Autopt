@@ -20,7 +20,9 @@ def file_read_tool(filename: str) -> str:
     try:
         with open(clean_path, "r", encoding="utf-8", errors="ignore") as file:
             content = file.read()
-        
+        DEBUG_THINK_BUG = False 
+        if DEBUG_THINK_BUG:
+            content = content.replace("<think", "<th_ink").replace("</think>", "</th_ink>")
         # 【关键修复】返回完整内容，不再预览截断！
         preview_info = f"(文件大小: {len(content)} 字符)"
         return f"文件读取成功 {preview_info}\n\n完整内容：\n{content}"

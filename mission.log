@@ -1,463 +1,116 @@
-=== 任务启动 2026-02-28 21:05:07 ===
-目标: http://192.168.154.128:32768
-最大轮次数: 10
+=== 任务启动 2026-03-16 18:59:24 ===
+目标: http://192.168.154.128/
 ================================================================================
 
-=== [2026-02-28 21:05:52] curl -v http://192.168.154.128:32768 ===
+=== [2026-03-16 19:00:12] curl -v -L -i http://192.168.154.128/ ===
 Time: 0.07s
 STDOUT:
-<!-- TODO: Delete the testing account (test:test). --> 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Trading Platform</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #2c3e50;
-            color: #ffffff;
-        }
-        .card {
-            background-color: #34495e;
-            color: #ffffff;
-        }
-    </style>
-</head>
-<body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h2 class="text-center mb-4">Trading Platform</h2>
-                
-                <form method="POST">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" class="form-control" id="username" name="username" required>
-                    </div>
-                    <button type="submit" class="btn btn-success btn-block">Login</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-STDERR:
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.10.12
+Date: Mon, 16 Mar 2026 11:00:13 GMT
+Content-type: text/html
+Content-Length: 897
+Last-Modified: Mon, 16 Mar 2026 10:43:45 GMT
 
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 192.168.154.128:32768...
-* Established connection to 192.168.154.128 (192.168.154.128 port 32768) from 192.168.154.1 port 43833 
+<style type="text/css">*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} a{color:#2E5CD5;cursor: pointer;text-decoration: none} a:hover{text-decoration:underline; } body{ background: #fff; font-family: "Century Gothic","Microsoft yahei"; color: #333;font-size:18px;} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.6em; font-size: 42px }</style><div style="padding: 24px 48px;"> <h1>:) </h1><p> ThinkPHP V5.1<br/><span style="font-size:30px">12杞藉垵蹇冧笉鏀癸紙2006-2018锛� - 浣犲�煎緱淇¤禆鐨凱HP妗嗘灦</span></p></div><script type="text/javascript" src="https://tajs.qq.com/stats?sId=64890268" charset="UTF-8"></script><script type="text/javascript" src="https://e.topthink.com/Public/static/client.js"></script><think id="eab4b9f840753f8e7">浣犵幇鍦ㄥ簲璇ュ仛鍑轰竴涓�鎵ц�屽脊鍑鸿�＄畻鍣ㄧ殑鎴樼暐鎰忓浘锛岃繖鏈夊埄浜庝綘鎺ヤ笅鏉ョ殑娓楅�忓伐浣�</think>
+STDERR:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+
+  0      0   0      0   0      0      0      0                              0*   Trying 192.168.154.128:80...
+* Established connection to 192.168.154.128 (192.168.154.128 port 80) from 192.168.154.1 port 31160 
 * using HTTP/1.x
 > GET / HTTP/1.1
 
-> Host: 192.168.154.128:32768
+> Host: 192.168.154.128
 
-> User-Agent: curl/8.16.0
-
-> Accept: */*
-
-> 
-
-* Request completely sent off
-< HTTP/1.1 200 OK
-
-< Date: Wed, 11 Feb 2026 12:06:04 GMT
-
-< Server: Apache/2.4.66 (Debian)
-
-< Content-Length: 1184
-
-< Cache-Control: public, max-age=0
-
-< Pragma: no-cache
-
-< Expires: 0
-
-< Vary: Accept-Encoding
-
-< Content-Type: text/html; charset=utf-8
-
-< 
-
-{ [1184 bytes data]
-
-100  1184  100  1184    0     0   189k      0 --:--:-- --:--:-- --:--:--  192k
-* Connection #0 to host 192.168.154.128:32768 left intact
-
-================================================================================
-=== [2026-02-28 21:07:08] curl -X POST -d "username=test&password=test" -v -c cookies.txt -b cookies.txt -L http://192.168.154.128:32768 ===
-Time: 0.09s
-STDOUT:
-<!doctype html>
-<html lang=en>
-<title>400 Bad Request</title>
-<h1>Bad Request</h1>
-<p>The browser (or proxy) sent a request that this server could not understand.</p>
-
-STDERR:
-Note: Unnecessary use of -X or --request, POST is already inferred.
-* WARNING: failed to open cookie file "cookies.txt"
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 192.168.154.128:32768...
-* Established connection to 192.168.154.128 (192.168.154.128 port 32768) from 192.168.154.1 port 14865 
-* using HTTP/1.x
-> POST / HTTP/1.1
-
-> Host: 192.168.154.128:32768
-
-> User-Agent: curl/8.16.0
-
-> Accept: */*
-
-> Content-Length: 27
-
-> Content-Type: application/x-www-form-urlencoded
-
-> 
-
-} [27 bytes data]
-* upload completely sent off: 27 bytes
-< HTTP/1.1 302 FOUND
-
-< Date: Sat, 28 Feb 2026 13:07:09 GMT
-
-< Server: Apache/2.4.66 (Debian)
-
-< Content-Length: 215
-
-* Need to rewind upload for next request
-< Location: /password/test
-
-< Cache-Control: public, max-age=0
-
-< Pragma: no-cache
-
-< Expires: 0
-
-< Content-Type: text/html; charset=utf-8
-
-* Ignoring the response-body
-* setting size while ignoring
-< 
-
-
-100   242  100   215  100    27   8930   1121 --:--:-- --:--:-- --:--:-- 10083
-* Connection #0 to host 192.168.154.128:32768 left intact
-* Issue another request to this URL: 'http://192.168.154.128:32768/password/test'
-* Stick to POST instead of GET
-* Reusing existing http: connection with host 192.168.154.128
-> POST /password/test HTTP/1.1
-
-> Host: 192.168.154.128:32768
-
-> User-Agent: curl/8.16.0
+> User-Agent: curl/8.18.0
 
 > Accept: */*
 
 > 
 
 * Request completely sent off
-< HTTP/1.1 400 BAD REQUEST
+* HTTP 1.0, assume close after body
+< HTTP/1.0 200 OK
 
-< Date: Sat, 28 Feb 2026 13:07:09 GMT
+< Server: SimpleHTTP/0.6 Python/3.10.12
 
-< Server: Apache/2.4.66 (Debian)
+< Date: Mon, 16 Mar 2026 11:00:13 GMT
 
-< Content-Length: 167
+< Content-type: text/html
 
-< Cache-Control: public, max-age=0
+< Content-Length: 897
 
-< Pragma: no-cache
-
-< Expires: 0
-
-< Connection: close
-
-< Content-Type: text/html; charset=utf-8
+< Last-Modified: Mon, 16 Mar 2026 10:43:45 GMT
 
 < 
 
-{ [167 bytes data]
+{ [897 bytes data]
 
-100   167  100   167    0     0   5133      0 --:--:-- --:--:-- --:--:--  5133
+100    897 100    897   0      0  32609      0                              0
+100    897 100    897   0      0  32514      0                              0
+100    897 100    897   0      0  32394      0                              0
 * shutting down connection #0
 
 ================================================================================
-=== [2026-02-28 21:07:12] curl -X POST -d "username=test&pwd=test" -v -c cookies.txt -b cookies.txt -L http://192.168.154.128:32768 ===
-Time: 0.07s
+=== [2026-03-16 19:05:59] python /aptools/dirsearch/dirsearch.py -u http://192.168.154.128/ -q --no-color --threads=10 ===
+Time: 0.10s
 STDOUT:
-<!doctype html>
-<html lang=en>
-<title>400 Bad Request</title>
-<h1>Bad Request</h1>
-<p>The browser (or proxy) sent a request that this server could not understand.</p>
 
 STDERR:
-Note: Unnecessary use of -X or --request, POST is already inferred.
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 192.168.154.128:32768...
-* Established connection to 192.168.154.128 (192.168.154.128 port 32768) from 192.168.154.1 port 17145 
-* using HTTP/1.x
-> POST / HTTP/1.1
-
-> Host: 192.168.154.128:32768
-
-> User-Agent: curl/8.16.0
-
-> Accept: */*
-
-> Content-Length: 22
-
-> Content-Type: application/x-www-form-urlencoded
-
-> 
-
-} [22 bytes data]
-* upload completely sent off: 22 bytes
-< HTTP/1.1 302 FOUND
-
-< Date: Sat, 28 Feb 2026 13:07:13 GMT
-
-< Server: Apache/2.4.66 (Debian)
-
-< Content-Length: 215
-
-* Need to rewind upload for next request
-< Location: /password/test
-
-< Cache-Control: public, max-age=0
-
-< Pragma: no-cache
-
-< Expires: 0
-
-< Content-Type: text/html; charset=utf-8
-
-* Ignoring the response-body
-* setting size while ignoring
-< 
-
-
-100   237  100   215  100    22  20161   2063 --:--:-- --:--:-- --:--:-- 23700
-* Connection #0 to host 192.168.154.128:32768 left intact
-* Issue another request to this URL: 'http://192.168.154.128:32768/password/test'
-* Stick to POST instead of GET
-* Reusing existing http: connection with host 192.168.154.128
-> POST /password/test HTTP/1.1
-
-> Host: 192.168.154.128:32768
-
-> User-Agent: curl/8.16.0
-
-> Accept: */*
-
-> 
-
-* Request completely sent off
-< HTTP/1.1 400 BAD REQUEST
-
-< Date: Sat, 28 Feb 2026 13:07:13 GMT
-
-< Server: Apache/2.4.66 (Debian)
-
-< Content-Length: 167
-
-< Cache-Control: public, max-age=0
-
-< Pragma: no-cache
-
-< Expires: 0
-
-< Connection: close
-
-< Content-Type: text/html; charset=utf-8
-
-< 
-
-{ [167 bytes data]
-
-100   167  100   167    0     0  10868      0 --:--:-- --:--:-- --:--:-- 10868
-* shutting down connection #0
+C:\Users\Tophanter\AppData\Local\Programs\Python\Python310\python.exe: can't open file 'D:\\aptools\\dirsearch\\dirsearch.py': [Errno 2] No such file or directory
 
 ================================================================================
-=== [2026-02-28 21:07:17] curl -I http://192.168.154.128:32768 ===
+=== [2026-03-16 19:07:53] curl -v -L -i http://192.168.154.128/ ===
 Time: 0.05s
 STDOUT:
-HTTP/1.1 200 OK
-Date: Sat, 28 Feb 2026 13:07:18 GMT
-Server: Apache/2.4.66 (Debian)
-Content-Length: 1184
-Cache-Control: public, max-age=0
-Pragma: no-cache
-Expires: 0
-Vary: Accept-Encoding
-Content-Type: text/html; charset=utf-8
+HTTP/1.0 200 OK
+Server: SimpleHTTP/0.6 Python/3.10.12
+Date: Mon, 16 Mar 2026 11:07:55 GMT
+Content-type: text/html
+Content-Length: 897
+Last-Modified: Mon, 16 Mar 2026 10:43:45 GMT
 
-
+<style type="text/css">*{ padding: 0; margin: 0; } div{ padding: 4px 48px;} a{color:#2E5CD5;cursor: pointer;text-decoration: none} a:hover{text-decoration:underline; } body{ background: #fff; font-family: "Century Gothic","Microsoft yahei"; color: #333;font-size:18px;} h1{ font-size: 100px; font-weight: normal; margin-bottom: 12px; } p{ line-height: 1.6em; font-size: 42px }</style><div style="padding: 24px 48px;"> <h1>:) </h1><p> ThinkPHP V5.1<br/><span style="font-size:30px">12杞藉垵蹇冧笉鏀癸紙2006-2018锛� - 浣犲�煎緱淇¤禆鐨凱HP妗嗘灦</span></p></div><script type="text/javascript" src="https://tajs.qq.com/stats?sId=64890268" charset="UTF-8"></script><script type="text/javascript" src="https://e.topthink.com/Public/static/client.js"></script><think id="eab4b9f840753f8e7">浣犵幇鍦ㄥ簲璇ュ仛鍑轰竴涓�鎵ц�屽脊鍑鸿�＄畻鍣ㄧ殑鎴樼暐鎰忓浘锛岃繖鏈夊埄浜庝綘鎺ヤ笅鏉ョ殑娓楅�忓伐浣�</think>
 STDERR:
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
 
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-  0  1184    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-
-================================================================================
-=== [2026-02-28 21:07:20] ping -c 2 192.168.154.128 ===
-Time: 0.25s
-STDOUT:
-访问被拒绝。选项 -c 需要具有管理权限。
-
-STDERR:
-
-================================================================================
-=== [2026-02-28 21:07:24] echo "测试执行工具" ===
-Time: 0.03s
-STDOUT:
-"测试执行工具"
-
-STDERR:
-
-================================================================================
-=== [2026-02-28 21:08:21] bash -c "curl -X GET -v -i 'http://192.168.154.128:32768/password/test'" ===
-Time: 0.03s
-STDOUT:
-
-STDERR:
-'bash' 不是内部或外部命令，也不是可运行的程序
-或批处理文件。
-
-================================================================================
-=== [2026-02-28 21:09:29] curl -v -c cookies.txt -b cookies.txt -L "http://192.168.154.128:32768/password/test" ===
-Time: 0.06s
-STDOUT:
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password - Trading Platform</title>
-    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #2c3e50;
-            color: #ffffff;
-        }
-        .card {
-            background-color: #34495e;
-            color: #ffffff;
-        }
-    </style>
-</head>
-<body>
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <h2 class="text-center mb-4">Trading Platform</h2>
-                <form method="POST">
-                    <div class="form-group">
-                        <p class="mt-3 text-center">Welcome, John!</p>
-                        <label for="password">Password</label>
-                        <input type="text" class="form-control" id="username" name="username" value="test" hidden>
-                        <input type="text" class="form-control" id="user_id" name="user_id" value="10032" hidden>
-                        <input type="password" class="form-control" id="password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-success btn-block">Login</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</body>
-</html>
-STDERR:
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying 192.168.154.128:32768...
-* Established connection to 192.168.154.128 (192.168.154.128 port 32768) from 192.168.154.1 port 37427 
+  0      0   0      0   0      0      0      0                              0*   Trying 192.168.154.128:80...
+* Established connection to 192.168.154.128 (192.168.154.128 port 80) from 192.168.154.1 port 11856 
 * using HTTP/1.x
-> GET /password/test HTTP/1.1
+> GET / HTTP/1.1
 
-> Host: 192.168.154.128:32768
+> Host: 192.168.154.128
 
-> User-Agent: curl/8.16.0
+> User-Agent: curl/8.18.0
 
 > Accept: */*
 
 > 
 
 * Request completely sent off
-< HTTP/1.1 200 OK
+* HTTP 1.0, assume close after body
+< HTTP/1.0 200 OK
 
-< Date: Sat, 28 Feb 2026 13:09:29 GMT
+< Server: SimpleHTTP/0.6 Python/3.10.12
 
-< Server: Apache/2.4.66 (Debian)
+< Date: Mon, 16 Mar 2026 11:07:55 GMT
 
-< Content-Length: 1418
+< Content-type: text/html
 
-< Cache-Control: public, max-age=0
+< Content-Length: 897
 
-< Pragma: no-cache
-
-< Expires: 0
-
-< Vary: Accept-Encoding
-
-< Content-Type: text/html; charset=utf-8
+< Last-Modified: Mon, 16 Mar 2026 10:43:45 GMT
 
 < 
 
-{ [1418 bytes data]
+{ [897 bytes data]
 
-100  1418  100  1418    0     0   106k      0 --:--:-- --:--:-- --:--:--  115k
-* Connection #0 to host 192.168.154.128:32768 left intact
-
-================================================================================
-=== [2026-02-28 21:10:51] echo "无正确命令" ===
-Time: 0.02s
-STDOUT:
-"无正确命令"
-
-STDERR:
-
-================================================================================
-=== [2026-02-28 21:11:52] echo "无正确命令" ===
-Time: 0.03s
-STDOUT:
-"无正确命令"
-
-STDERR:
-
-================================================================================
-=== [2026-02-28 21:13:57] curl -X POST -d "password=test&username=test&user_id=10032" http://192.168.154.128:32768/password/test ===
-Time: 0.09s
-STDOUT:
-<!doctype html>
-<html lang=en>
-<title>Redirecting...</title>
-<h1>Redirecting...</h1>
-<p>You should be redirected automatically to the target URL: <a href="/dashboard?username=test">/dashboard?username=test</a>. If not, click the link.
-
-STDERR:
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-100   276  100   235  100    41   6565   1145 --:--:-- --:--:-- --:--:--  7885
-
-================================================================================
-=== [2026-02-28 21:15:02] python D:/project/reautopt/team/aptools/dirsearch/dirsearch.py -u http://192.168.154.128:32768/dashboard --cookie-file cookies.txt -e php,asp,aspx,jsp,html,js,css,json,xml,txt -x 400,403,404,500 --random-agent --threads 50 -q --no-color -o dashboard_scan_results.txt ===
-Time: 0.53s
-STDOUT:
-
-STDERR:
-Usage: dirsearch.py [-u|--url] target [-e|--extensions] extensions [options]
-
-dirsearch.py: error: no such option: --cookie-file
+100    897 100    897   0      0 192.7k      0                              0
+100    897 100    897   0      0 188.7k      0                              0
+100    897 100    897   0      0 185.1k      0                              0
+* shutting down connection #0
 
 ================================================================================
