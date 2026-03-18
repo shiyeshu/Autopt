@@ -1,5 +1,6 @@
 .env
  - 副本.env
- final_report.md
- final_report.html
- mission.log
+final_report.md
+final_report.html
+mission.log
+__pycache__
