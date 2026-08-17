@@ -3,4 +3,36 @@
 final_report.md
 final_report.html
 mission.log
+ui_mission.log
 __pycache__
+
+# æœ¬åœ°æ•æ„Ÿ/è¿è¡Œäº§ç‰©
+.env.github_template
+.env_b
+cookies.txt
+result.txt
+reports/
+aptools/
+venv/
+
+# æœ¬åœ°å¯åŠ¨è„šæœ¬ï¼ˆå«æœ¬æœºè·¯å¾„ï¼Œä¸æäº¤ï¼‰
+start.bat
+
+# ÔËĞĞ²úÎïÓë²âÊÔ²ĞÁô
+final_report.md
+final_report.html
+http_*_response.txt
+*_response.txt
+
+# Ê±¼ä´ÁÃüÃûµÄÔËĞĞ±¨¸æ
+autopt_*_*.md
+autopt_*_*.html
+
+# è¿è¡Œæ—¶æ•°æ®ï¼ˆSQLite/èµ„äº§ç­‰ï¼‰
+data/
+skills/*.md.bak
+
+
+# æ‰«æç»“æœä¸´æ—¶ç›®å½•
+recon_results/
+

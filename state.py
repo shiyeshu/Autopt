@@ -13,8 +13,9 @@ class PenTestState(TypedDict):
     deputy_requirement: str        # Deputy 输出的技术需求
     operator_command: str          # Operator 生成的命令
     execution_result: str          # Auditor 执行结果
-    log_result: str                # Logger 写入结果
     
     # 最终报告
     final_report: str              # Reporter 生成的报告
     final_html: str                # 生成HTML报告
+    report_md_path: str            # 带时间戳的 MD 报告路径（问题3）
+    report_html_path: str          # 带时间戳的 HTML 报告路径（问题3）

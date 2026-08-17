@@ -1,16 +1,14 @@
 # AutoPT 2.0 - 具有普适性的AI自动化渗透测试工具
 
 [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
-[![Framework](https://img.shields.io/badge/CrewAI-1.6.1-green.svg)](https://crewai.com)
+[![Framework](https://img.shields.io/badge/LangGraph-1.0.8-green.svg)](https://langchain-ai.github.io/langgraph/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 ## 项目简介
 
-AutoPT是一个基于CrewAI框架开发的自动化网络安全渗透测试工具。通过多个专业AI代理的协作，实现智能化的渗透测试流程自动化，帮助安全研究人员和渗透测试人员提高工作效率。本项目吸收了xbow的多agent、多模型协作特点，以实现AI能效最大化。但不同的是没有像多数渗透agent一样将提示词细化到具体操作、具体工具，这样做的目的是提高通用性，实现真正的AI智能化。
+AutoPT是一个基于LangGraph框架开发的自动化网络安全渗透测试工具。通过多个专业AI代理的协作，实现智能化的渗透测试流程自动化，帮助安全研究人员和渗透测试人员提高工作效率。本项目吸收了xbow的多agent、多模型协作特点，以实现AI能效最大化。但不同的是没有像多数渗透agent一样将提示词细化到具体操作、具体工具，这样做的目的是提高通用性，实现真正的AI智能化。
 
-
-
-本项目为langchain重构版本，大大提升了速度和可靠性，优化了多处问题。原项目已迁移至old分支。
+本项目为langchain/langgraph重构版本，大大提升了速度和可靠性，优化了多处问题。原CrewAI版本已迁移至old分支。
 
 ![image-20251226111055995](./images/1.png)
 
