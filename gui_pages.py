@@ -647,6 +647,95 @@ def rag_page():
         refresh_entries()
 
 
+# ==================== 模块11: 报告中心 ====================
+@ui.page("/reports")
+def reports_page():
+    ui.add_head_html("<title>AutoPT - 报告中心</title>")
+    _nav_header("reports")
+
+    reports_dir = PROJECT_ROOT / "reports"
+
+    def refresh():
+        list_container.clear()
+        if not reports_dir.exists():
+            ui.label("暂无报告").classes("text-gray-400")
+            return
+        files = sorted(
+            [f for f in reports_dir.iterdir() if f.is_file() and f.suffix.lower() in (".md", ".html")],
+            key=lambda f: f.stat().st_mtime, reverse=True,
+        )
+        if not files:
+            ui.label("暂无报告").classes("text-gray-400")
+            return
+
+        # 优化2: 按任务分组——时间戳前缀相同的 md/html 视为同一任务的报告
+        # 文件名格式: autopt_YYYYMMDD_HHMMSS_目标.md/.html
+        groups: dict[str, list] = {}
+        for f in files:
+            # 去掉扩展名后按 "_" 分段，任务组 = 时间戳(前2段) + 目标(剩余)
+            stem = f.stem  # autopt_20260818_011723_target
+            parts = stem.split("_")
+            # 取 autopt_时间戳 作为组key（时间戳含日期+时间两部分）
+            group_key = "_".join(parts[:3]) if len(parts) >= 3 else stem
+            groups.setdefault(group_key, []).append(f)
+
+        for gkey, gfiles in groups.items():
+            # 时间戳解析 + 目标名
+            mtime = datetime.fromtimestamp(gfiles[0].stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            parts = gkey.split("_")
+            target = "_".join(parts[3:]) if len(parts) > 3 else ""
+            md_file = next((f for f in gfiles if f.suffix == ".md"), None)
+            html_file = next((f for f in gfiles if f.suffix == ".html"), None)
+
+            with ui.card().classes("w-full"):
+                with ui.row().classes("w-full items-center justify-between"):
+                    with ui.column().classes("gap-0 flex-grow"):
+                        ui.label(f"📄 任务报告: {target or gkey}").classes("font-bold")
+                        ui.label(f"{mtime} | {len(gfiles)} 个格式").classes("text-xs text-gray-500")
+                    with ui.row().classes("gap-2"):
+                        # 同一任务提供两种格式下载
+                        if md_file:
+                            ui.button("下载 Markdown", on_click=lambda fp=str(md_file): _download(fp)).props("outline size=sm color=primary")
+                        if html_file:
+                            ui.button("下载 HTML", on_click=lambda fp=str(html_file): _download(fp)).props("outline size=sm color=primary")
+                        # 删除整组
+                        ui.button("删除", on_click=lambda gs=gfiles: _delete_group(gs)).props("outline size=sm color=red")
+
+    def _delete_group(gs):
+        for f in gs:
+            try:
+                os.remove(f)
+            except Exception:
+                pass
+        refresh()
+        ui.notify("报告已删除", type="warning")
+
+    def _download(fp):
+        import base64
+        try:
+            with open(fp, "rb") as fh:
+                b64 = base64.b64encode(fh.read()).decode("ascii")
+            filename = os.path.basename(fp)
+            ui.run_javascript(f"""
+                const bytes = Uint8Array.from(atob('{b64}'), c => c.charCodeAt(0));
+                const blob = new Blob([bytes], {{type: 'text/plain;charset=utf-8'}});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = '{filename}';
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            """)
+        except Exception as e:
+            ui.notify(f"下载失败: {e}", type="negative")
+
+    with ui.column().classes("w-full max-w-5xl mx-auto p-6 gap-4"):
+        ui.label("报告中心").classes("text-2xl font-bold")
+        ui.label("所有生成的测试报告统一存放于此").classes("text-sm text-gray-500")
+        list_container = ui.column().classes("w-full gap-2")
+        refresh()
+
+
 # ==================== 导航 ====================
 def _nav_header(active: str):
     """顶栏导航。"""
@@ -654,6 +743,7 @@ def _nav_header(active: str):
         ("/", "任务", "terminal"),
         ("/projects", "项目/资产", "folder"),
         ("/history", "历史会话", "history"),
+        ("/reports", "报告中心", "description"),
         ("/settings", "设置", "settings"),
         ("/agents", "Agent管理", "groups"),
         ("/skills", "Skills", "extension"),

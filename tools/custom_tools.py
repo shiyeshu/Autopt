@@ -186,14 +186,42 @@ def list_custom_tool(subdir: str = "") -> str:
             print(f"[SYSTEM TOOL] ⚠️ 目录是空的")
             return f"SYSTEM NOTICE: 目录 '{target_path}' 存在，但是里面是空的。"
 
+        # bug2修复: 知名工具用途标注，帮助 AI 识别工具能力
+        KNOWN_TOOLS = {
+            "nmap": "端口/服务扫描",
+            "sqlmap": "SQL注入检测与利用",
+            "dirsearch": "目录/路径爆破",
+            "ffuf": "Web模糊测试/目录爆破",
+            "fscan": "内网快速扫描(端口+漏洞)",
+            "nuclei": "模板化漏洞扫描",
+            "hydra": "弱口令爆破",
+            "gobuster": "目录/子域爆破",
+            "nikto": "Web服务器扫描",
+            "burpsuite": "Web代理/渗透测试",
+            "masscan": "快速全端口扫描",
+            "wpscan": "WordPress漏洞扫描",
+            "metasploit": "漏洞利用框架",
+            "beef": "浏览器攻击框架",
+            "ncat": "网络连接工具",
+            "curl": "HTTP请求工具",
+            "wget": "文件下载工具",
+        }
+
         result_lines = [f"Found {len(items)} items in {target_path}:"]
         for item in items:
             full_path = os.path.join(target_path, item)
             full_path = full_path.replace("\\", "/")
+            # 工具用途标注（匹配已知工具名，忽略大小写）
+            hint = ""
+            item_lower = item.lower()
+            for tool, usage in KNOWN_TOOLS.items():
+                if tool in item_lower:
+                    hint = f"  [{usage}]"
+                    break
             if os.path.isdir(full_path):
-                result_lines.append(f"[DIR] {full_path}")
+                result_lines.append(f"[DIR] {full_path}{hint}")
             else:
-                result_lines.append(f"[FILE] {full_path}")
+                result_lines.append(f"[FILE] {full_path}{hint}")
 
         output = "\n".join(result_lines)
         print(f"[SYSTEM TOOL] ✅ 成功列出文件。")

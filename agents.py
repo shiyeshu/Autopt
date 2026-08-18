@@ -116,6 +116,37 @@ def build_context_injections(target: str = "", mission_history: str = "") -> str
 CURRENT_TARGET = ""
 CURRENT_HISTORY = ""
 
+# 功能优化5: 任务专属工作目录（AI 产生的文件统一存放）
+TASK_WORK_DIR = ""
+
+
+def set_task_work_dir(path: str):
+    """设置当前任务的工作目录（由 GUI 在任务启动时调用）。"""
+    global TASK_WORK_DIR
+    TASK_WORK_DIR = path
+
+
+def get_work_dir_hint() -> str:
+    """返回工作目录提示文本（注入 system prompt，指导 AI 文件存放）。"""
+    if not TASK_WORK_DIR:
+        return ""
+    return (
+        f"【任务工作目录】本次任务的工作目录为: {TASK_WORK_DIR}\n"
+        "所有脚本、扫描结果、临时文件等一律保存到此目录中，便于统一管理。\n"
+        "保存文件时使用绝对路径写入该目录。"
+    )
+
+
+def get_batch_hint() -> str:
+    """批量操作倾向提示（功能优化4: 批量场景优先写脚本而非逐条请求）。"""
+    return (
+        "【批量操作原则】当需要测试多个路径、多个参数、多个注入点时，"
+        "不要逐条重复发送请求（如多次 curl），而应优先编写一个脚本（Python/Shell）"
+        "批量遍历并执行，脚本保存到任务工作目录，然后一次性运行。"
+        "这样更高效且节省资源。"
+    )
+
+
 ROLE_NAME_MAP = {
     "STRATEGIST": "渗透指挥官",
     "DEPUTY": "副指挥官",
@@ -408,8 +439,10 @@ def _stream_llm(llm_with_tools, messages, role_display):
     last_flush = time.time()
 
     def flush_buffers():
-        """把累积的思考/回答文本刷到 UI（按行分批，避免刷屏）。"""
-        nonlocal pending_reasoning, pending_content, last_flush
+        """把累积的思考/回答文本刷到 UI（按行分批，避免刷屏）。
+        bug1修复: 抑制与上一轮高度重复的 content（ReAct 循环中模型
+        反复输出相似措辞时不再刷屏）。"""
+        nonlocal pending_reasoning, pending_content, last_flush, _last_flushed_content
         now = time.time()
 
         if pending_reasoning.strip():
@@ -426,16 +459,32 @@ def _stream_llm(llm_with_tools, messages, role_display):
             # 保留换行结构（编码为 ⏎），避免 markdown 被抹平成单行
             line = _encode_stream_text(pending_content).strip()
             if line:
-                if len(line) > STREAM_LINE_MAX:
-                    write_ui_log(f"[REPLY] 💬 {role_display} 返回: {line[:STREAM_LINE_MAX]}")
-                    write_ui_log(f"[REPLY] ... {line[STREAM_LINE_MAX:STREAM_LINE_MAX * 2]}")
-                else:
-                    write_ui_log(f"[REPLY] 💬 {role_display} 返回: {line}")
+                # 与上一次刷出的 content 比较，相似则跳过（重复输出抑制）
+                is_similar = False
+                if _last_flushed_content:
+                    a, b = line[:200], _last_flushed_content[:200]
+                    common = 0
+                    for x, y in zip(a, b):
+                        if x == y:
+                            common += 1
+                        else:
+                            break
+                    longer = max(len(a), len(b), 1)
+                    if longer >= 8 and common / longer > 0.6:
+                        is_similar = True
+                if not is_similar:
+                    if len(line) > STREAM_LINE_MAX:
+                        write_ui_log(f"[REPLY] 💬 {role_display} 返回: {line[:STREAM_LINE_MAX]}")
+                        write_ui_log(f"[REPLY] ... {line[STREAM_LINE_MAX:STREAM_LINE_MAX * 2]}")
+                    else:
+                        write_ui_log(f"[REPLY] 💬 {role_display} 返回: {line}")
+                    _last_flushed_content = line
             pending_content = ""
 
         last_flush = now
 
     # 流式循环
+    _last_flushed_content = ""
     for chunk in llm_with_tools.stream(messages):
         # 停止检查
         if mission_control.stopped:
@@ -566,6 +615,7 @@ def execute_agent_logic(role_name, tools, system_text, user_text, max_steps=5):
 
     messages = [SystemMessage(content=system_text), HumanMessage(content=user_text)]
     streamed = True  # 默认视为已流式输出（循环异常退出时不重复记录）
+    last_output = ""  # bug1修复: 记录上一轮 content，检测重复输出
 
     for step in range(max_steps):
         # --- 架构4: 停止检查 ---
@@ -591,6 +641,26 @@ def execute_agent_logic(role_name, tools, system_text, user_text, max_steps=5):
 
             tool_calls = getattr(response, "tool_calls", [])
             has_tool_calls = bool(tool_calls)
+
+            # bug1修复: 重复输出抑制——若本轮 content 与上轮高度相似，
+            # 说明模型在 ReAct 循环中重复措辞，不再重复记录到 REPLY
+            cur_text = str(response_content or "").strip()
+            is_repeat = False
+            if cur_text and last_output:
+                # 简化相似度: 去除空白后比较公共前缀长度占比
+                a, b = cur_text[:200], last_output[:200]
+                common = 0
+                for x, y in zip(a, b):
+                    if x == y:
+                        common += 1
+                    else:
+                        break
+                longer = max(len(a), len(b), 1)
+                # 比例阈值: 公共前缀占比>60% 且 至少重叠6个字符
+                if longer >= 8 and common / longer > 0.6:
+                    is_repeat = True
+            if cur_text:
+                last_output = cur_text
 
             # 问题2修复: 记录 LLM 具体返回内容（最终回答）
             if not has_tool_calls:
@@ -667,6 +737,8 @@ def strategist_node(state: PenTestState) -> PenTestState:
         f"Goal: {cfg['goal']}\n"
         f"Backstory: {cfg['backstory']}\n"
         f"{COT_INSTRUCTION}\n"
+        f"{get_batch_hint()}\n"
+        f"{get_work_dir_hint()}\n"
         "你会收到任务描述、历史战况摘要（mission_history）和 mission.log 最新正文。\n"
         "mission.log 是权威证据源；mission_history 是先前轮次的摘要，供快速了解进展。\n"
         "你必须严格基于日志中出现的真实文本做判断，严禁编造未发生的发现。\n"
@@ -716,7 +788,18 @@ def operator_node(state: PenTestState) -> PenTestState:
 
     os_hint = build_os_hint()
 
-    sys_prompt = f"Role: {cfg['role']}\nGoal: {cfg['goal']}\nBackstory: {cfg['backstory']}\n{COT_INSTRUCTION}"
+    sys_prompt = (
+        f"Role: {cfg['role']}\nGoal: {cfg['goal']}\nBackstory: {cfg['backstory']}\n"
+        f"{COT_INSTRUCTION}\n"
+        f"{get_batch_hint()}\n"
+        f"{get_work_dir_hint()}\n"
+        "【常见工具知识】aptools 目录可能包含以下知名工具（目录存在与否以 list 结果为准，"
+        "但可根据需求主动查找对应工具目录）：nmap(端口扫描)、sqlmap(SQL注入)、"
+        "dirsearch/ffuf(目录爆破)、fscan(内网扫描)、nuclei(漏洞扫描)、"
+        "hydra(弱口令)、gobuster(目录/子域)、nikto(Web扫描)、masscan(快速端口扫描)、"
+        "wpscan(WordPress)、metasploit(漏洞利用)。若目录列表中出现这些工具名，"
+        "直接使用即可，无需怀疑其可用性。"
+    )
     task_prompt = (
         task["description"].format(target=state["target"])
         + f"\n\n{os_hint}\nDeputy需求: {state['deputy_requirement']}"
@@ -737,6 +820,8 @@ def auditor_node(state: PenTestState) -> PenTestState:
         f"Goal: {cfg['goal']}\n"
         f"Backstory: {cfg['backstory']}\n"
         f"{COT_INSTRUCTION}\n"
+        f"{get_batch_hint()}\n"
+        f"{get_work_dir_hint()}\n"
         f"{os_hint}"
         "你必须执行命令，并返回真实执行结果摘要。不要把结果改写成固定话术。\n"
         "如果命令明显不属于当前操作系统，请明确指出兼容性问题。"

@@ -507,6 +507,23 @@ async def run_mission(
     except Exception:
         pass
 
+    # 功能优化5: 创建任务专属工作目录（AI 产生的文件统一存放）
+    try:
+        import re as _re
+        from datetime import datetime as _dt
+        ts = _dt.now().strftime("%Y%m%d_%H%M%S")
+        safe_target = _re.sub(r"[^A-Za-z0-9_.-]+", "_", str(target)).strip("_")[:40] or "target"
+        task_dir = config.PROJECT_ROOT / "task_workspace" / f"{ts}_{safe_target}"
+        task_dir.mkdir(parents=True, exist_ok=True)
+        os.environ["TASK_WORK_DIR"] = str(task_dir)
+        log_manager.push_message(f"[INFO] 📁 任务工作目录: {task_dir.name}")
+        # 提示 AI 文件统一存放（通过全局上下文）
+        import agents as _agents
+        _agents.TASK_WORK_DIR = str(task_dir)
+        _agents.set_task_work_dir(str(task_dir))
+    except Exception:
+        pass
+
     # 架构4: 重置停止标记
     mission_control.reset()
 
@@ -777,27 +794,37 @@ def main_page():
             for p in projects:
                 if p["id"] != TEMP_PROJECT_ID:
                     project_options[p["id"]] = p["name"]
+            # UI问题2: 下拉框末尾加"创建新项目"虚拟选项
+            project_options["__new__"] = "➕ 创建新项目..."
             project_select = ui.select(
                 project_options, label="所属项目", value=TEMP_PROJECT_ID
             ).props("outlined dense color=black").classes("w-full")
 
-            with ui.row().classes("w-full gap-2 items-center"):
-                new_project_input = ui.input(
-                    label="新建项目名称（可选）",
-                    placeholder="输入后回车创建",
-                ).props("outlined dense color=black").classes("flex-grow")
+            def on_project_change():
+                # 选中"创建新项目"时弹出输入框
+                if project_select.value == "__new__":
+                    with ui.dialog() as dialog, ui.card():
+                        ui.label("创建新项目").classes("font-bold")
+                        new_name = ui.input("项目名称").classes("w-64")
 
-                def create_project_quick():
-                    name = new_project_input.value.strip()
-                    if name:
-                        pid = _db.get_or_create_project(name)
-                        project_options[pid] = name
-                        project_select.options = project_options
-                        project_select.value = pid
-                        new_project_input.value = ""
-                        ui.notify(f"项目 '{name}' 已创建并选中", type="positive")
+                        def do_create():
+                            name = new_name.value.strip()
+                            if name:
+                                pid = _db.get_or_create_project(name)
+                                project_options[pid] = name
+                                project_select.options = project_options
+                                project_select.value = pid
+                                dialog.close()
+                                ui.notify(f"项目 '{name}' 已创建并选中", type="positive")
+                            else:
+                                ui.notify("项目名称不能为空", type="warning")
 
-                ui.button("创建", on_click=create_project_quick).props("outline dense")
+                        with ui.row().classes("gap-2"):
+                            ui.button("创建", on_click=do_create).props("color=primary")
+                            ui.button("取消", on_click=lambda: (dialog.close(), setattr(project_select, "value", TEMP_PROJECT_ID))).props("flat")
+                    dialog.open()
+
+            project_select.on_value_change(on_project_change)
 
             target_input = ui.input(
                 label="Target IP / URL",
@@ -819,27 +846,6 @@ def main_page():
                 max=10.0,
                 step=0.5,
             ).props("outlined dense color=black").classes("w-full")
-
-            # 模块2: 插话输入框（任务运行中可随时添加新需求）
-            interrupt_input = ui.input(
-                label="插话（运行中插入新需求）",
-                placeholder="例如: 额外扫描 8080 端口",
-            ).props("outlined dense color=black").classes("w-full")
-            interrupt_btn = ui.button(
-                "插入需求", icon="chat"
-            ).props("outline dense color=black").classes("w-full")
-
-            def send_interrupt():
-                text = interrupt_input.value
-                if text and text.strip():
-                    import agents as _agents
-                    _agents.add_interrupt_request(text.strip())
-                    interrupt_input.value = ""
-                    ui.notify("已插入需求，将在下一个 Agent 执行时生效", type="positive")
-                else:
-                    ui.notify("请输入要插入的需求", type="warning")
-
-            interrupt_btn.on_click(send_interrupt)
 
             start_btn = ui.button(
                 "START OPERATION",
@@ -944,9 +950,13 @@ def main_page():
             async def handle_start():
                 # 模块3/5: 任务归属项目（默认归入"临时项目"）
                 try:
-                    proj_id = int(project_select.value) if project_select.value else None
+                    val = project_select.value
+                    if val == "__new__" or not val:
+                        proj_id = TEMP_PROJECT_ID
+                    else:
+                        proj_id = int(val)
                 except (TypeError, ValueError):
-                    proj_id = None
+                    proj_id = TEMP_PROJECT_ID
                 title = f"{target_input.value} ({datetime.now().strftime('%H:%M:%S')})"
                 await run_mission(
                     target=target_input.value,
@@ -974,6 +984,54 @@ def main_page():
 
             start_btn.on_click(handle_start)
             stop_btn.on_click(handle_stop)
+
+    # UI问题3: 插话悬浮面板（优化: 与终端框同宽、水平居中，气泡在右下角）
+    # 面板固定居中显示在页面底部区域（宽度与终端 w-3/4 一致）
+    with ui.row().classes(
+        "fixed bottom-6 left-1/2 -translate-x-1/2 items-center gap-3 z-50 w-3/4"
+    ) as interrupt_wrap:
+        interrupt_wrap.visible = False
+        with ui.column().classes(
+            "flex-grow bg-white border border-gray-200 rounded-xl shadow-lg p-4 gap-2"
+        ) as interrupt_panel:
+            with ui.row().classes("w-full items-center justify-between"):
+                ui.label("插入需求").classes("text-sm font-bold text-gray-700")
+                ui.button("✕", on_click=lambda: toggle_interrupt_panel(False)).props("flat dense size=sm")
+
+            interrupt_input = ui.textarea(
+                placeholder="例如: 额外扫描 8080 端口\n任务运行中随时插入，下个 Agent 执行时生效",
+            ).props("outlined rows=3").classes("w-full")
+            with ui.row().classes("w-full items-center justify-end gap-2"):
+                send_btn = ui.button(
+                    "发送插话", icon="send"
+                ).props("color=primary dense")
+
+                def do_send():
+                    text = interrupt_input.value
+                    if text and text.strip():
+                        import agents as _agents
+                        _agents.add_interrupt_request(text.strip())
+                        interrupt_input.value = ""
+                        ui.notify("已插入需求，将在下一个 Agent 执行时生效", type="positive")
+                        toggle_interrupt_panel(False)
+                    else:
+                        ui.notify("请输入要插入的需求", type="warning")
+
+                send_btn.on_click(do_send)
+
+    # 右下角悬浮气泡按钮（独立于面板，始终可见）
+    with ui.row().classes("fixed bottom-4 right-4 z-50") as bubble_area:
+        bubble_btn = ui.button(
+            "", icon="chat_bubble"
+        ).props("round color=primary size=lg").classes("shadow-lg")
+        bubble_btn.style("width: 56px; height: 56px;")
+
+        def toggle_interrupt_panel(show: bool | None = None):
+            target = not interrupt_wrap.visible if show is None else show
+            interrupt_wrap.visible = target
+            bubble_btn.set_visibility(not target)
+
+        bubble_btn.on_click(lambda: toggle_interrupt_panel())
 
 if __name__ in {"__main__", "__mp_main__"}:
     ui.run(title="AutoPT", port=8080, reload=False)
