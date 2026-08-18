@@ -526,26 +526,45 @@ def rag_page():
                         ui.label(f"[{role_label}] {m['content'][:120]}").classes("text-xs").props("wrap")
 
     def _collect(tid, task_title):
-        """问题5修复: 从历史会话选择任务，自动收录消息到 RAG（自动分词）。"""
+        """从历史会话选择任务，自动收录完整上下文到 RAG。
+
+        优化: 除历史消息外，合并 mission.log 完整证据链（命令+输出），
+        确保收录的是整个任务上下文而非零碎片段。
+        """
+        # 1. 历史消息
         msgs = db.list_messages(tid)
-        if not msgs:
-            ui.notify("该任务没有可收录的消息", type="warning")
-            return
-        # 组合消息内容
         content_parts = []
         for m in msgs:
             if m["role"] in ("assistant", "tool") and m["content"].strip():
                 content_parts.append(m["content"].strip())
-        if not content_parts:
-            ui.notify("该任务没有可收录的 AI/工具输出", type="warning")
+
+        # 2. 合并 mission.log 完整证据链（该任务期间的所有命令与输出）
+        log_parts = []
+        try:
+            from config import config as _cfg
+            log_path = _cfg.LOG_FILE_PATH
+            if os.path.exists(log_path):
+                log_text = open(log_path, encoding="utf-8", errors="ignore").read()
+                if log_text.strip():
+                    log_parts.append(log_text[-8000:])  # 最近 8000 字符证据链
+        except Exception:
+            pass
+
+        if not content_parts and not log_parts:
+            ui.notify("该任务没有可收录的内容", type="warning")
             return
-        content = "\n".join(content_parts)[:4000]
+
+        content = "\n\n=== 任务轮次 ===\n".join(content_parts)
+        if log_parts:
+            content += "\n\n=== 命令执行证据链 ===\n" + log_parts[0]
+        content = content[:6000]  # 收录限长（超过截断）
+
         # 自动分类：根据内容关键词
         cat = "general"
         joined = content.lower()
         if "cve-" in joined or "漏洞" in joined or "vuln" in joined:
             cat = "vuln"
-        elif "nmap" in joined or "dirsearch" in joined or "curl" in joined or "扫描" in joined:
+        elif "nmap" in joined or "dirsearch" in joined or "curl" in joined or "扫描" in joined or "sqlmap" in joined:
             cat = "tool"
         elif "策略" in joined or "战术" in joined or "下一步" in joined:
             cat = "strategy"
@@ -557,7 +576,7 @@ def rag_page():
             source_task_title=task_title,
         )
         refresh_entries()
-        ui.notify(f"已收录 {len(content_parts)} 条消息到 RAG（分类: {cat}）", type="positive")
+        ui.notify(f"已收录任务完整上下文（{len(content)} 字符，分类: {cat}）", type="positive")
 
     with ui.column().classes("w-full max-w-5xl mx-auto p-6 gap-4"):
         ui.label("RAG 知识库").classes("text-2xl font-bold")
@@ -597,10 +616,11 @@ def rag_page():
 
             ui.button("导出知识库", on_click=export_rag).props("outline size=sm")
             ui.upload(
-                label="导入知识库 (JSON)",
+                label="导入知识库",
                 auto_upload=True,
                 on_upload=import_rag,
-            ).props("accept=.json").classes("w-48")
+            ).props('accept=".json" size=sm flat color=primary').classes("w-32").style("min-height: 0;")
+            ui.label("(JSON)").classes("text-xs text-gray-400")
 
         def _rebuild_vectors():
             n, msg = store.rebuild_all_vectors()
