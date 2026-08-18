@@ -41,12 +41,13 @@ DATA_DIR = PROJECT_ROOT / "data"
 DATABASE_PATH = DATA_DIR / "agents.db"
 AGENTS_YAML_PATH = PROJECT_ROOT / "config" / "agents.yaml"
 
-# 内置角色默认工具（从 agents.py 各节点 bind_tools 定义推断）
+# 内置角色默认工具（从 agents.py 各节点 bind_tools 定义推断 + 内置网络工具）
+# 含 http_get/http_post/dns_lookup 等内置工具，新环境自动生效
 BUILTIN_TOOLS = {
-    "strategist": ["file_read_tool"],
+    "strategist": ["file_read_tool", "http_get_tool", "dns_lookup_tool"],
     "deputy": [],
-    "operator": ["list_custom_tool"],
-    "auditor": ["execution_tool"],
+    "operator": ["list_custom_tool", "http_get_tool"],
+    "auditor": ["execution_tool", "http_get_tool", "http_post_tool", "dns_lookup_tool"],
     "reporter": ["file_read_tool", "file_write_tool"],
     "html_reporter": ["file_read_tool", "file_write_tool"],
 }
@@ -204,12 +205,23 @@ class AgentManager:
         return cfg if isinstance(cfg, dict) else {}
 
     def _import_builtins_if_empty(self):
-        """agents 表为空时，从 config/agents.yaml 导入内置角色（is_builtin=1）。"""
+        """agents 表为空时，从 config/agents.yaml 导入内置角色（is_builtin=1）。
+        非空时也会把内置角色的 tools 同步为 BUILTIN_TOOLS（保留用户改的
+        role/goal/backstory，仅确保内置工具接入）。"""
         with self._lock:
             conn = self._connect()
             try:
                 count = conn.execute("SELECT COUNT(*) FROM agents").fetchone()[0]
                 if count > 0:
+                    # 同步内置角色的工具（新内置工具接入已有环境）
+                    now = _now()
+                    for key, tools in BUILTIN_TOOLS.items():
+                        k = _normalize_key(key)
+                        conn.execute(
+                            "UPDATE agents SET tools=?, updated_at=? WHERE key=? AND is_builtin=1",
+                            (_dumps_tools(tools), now, k),
+                        )
+                    conn.commit()
                     return
                 cfg = self._load_yaml_config()
                 now = _now()

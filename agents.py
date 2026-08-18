@@ -138,12 +138,15 @@ def get_work_dir_hint() -> str:
 
 
 def get_batch_hint() -> str:
-    """批量操作倾向提示（功能优化4: 批量场景优先写脚本而非逐条请求）。"""
+    """批量操作倾向提示：优先用专业工具，缺工具才写脚本。"""
     return (
-        "【批量操作原则】当需要测试多个路径、多个参数、多个注入点时，"
-        "不要逐条重复发送请求（如多次 curl），而应优先编写一个脚本（Python/Shell）"
-        "批量遍历并执行，脚本保存到任务工作目录，然后一次性运行。"
-        "这样更高效且节省资源。"
+        "【工具优先原则】当需要目录扫描、端口扫描、SQL注入检测等批量操作时，"
+        "**必须优先使用工具目录中已有的专业工具**（如 dirsearch 目录扫描、"
+        "nmap 端口扫描、sqlmap SQL注入、fscan 综合扫描等），这些工具支持"
+        "批量遍历、效率高且结果可靠。\n"
+        "只有在工具目录中没有合适的工具、或需要完全自定义的特殊逻辑时，"
+        "才考虑编写脚本（Python/Shell）。脚本保存到任务工作目录后运行。\n"
+        "禁止为了展示能力而重复造轮子——能用现成工具绝不自写脚本。"
     )
 
 
@@ -788,6 +791,21 @@ def operator_node(state: PenTestState) -> PenTestState:
 
     os_hint = build_os_hint()
 
+    # 工具优先兜底: 根据 Deputy 需求关键词推荐具体工具（模型不看目录也能选对）
+    dep_req = state.get("deputy_requirement", "") or ""
+    recommend = ""
+    dep_lower = dep_req.lower()
+    if any(k in dep_lower for k in ("目录", "路径", "dir", "爆破", "敏感文件", "dirsearch")):
+        recommend = "【推荐】需求涉及目录/路径扫描 → 优先使用工具目录中的 dirsearch（目录爆破工具）"
+    elif any(k in dep_lower for k in ("sql", "注入", "sqli")):
+        recommend = "【推荐】需求涉及 SQL 注入 → 优先使用工具目录中的 sqlmap"
+    elif any(k in dep_lower for k in ("端口", "port", "服务识别")):
+        recommend = "【推荐】需求涉及端口扫描 → 优先使用工具目录中的 nmap"
+    elif any(k in dep_lower for k in ("弱口令", "爆破", "hydra", "密码")):
+        recommend = "【推荐】需求涉及弱口令/爆破 → 优先使用工具目录中的 hydra 或 fscan"
+    elif any(k in dep_lower for k in ("漏洞", "vuln", "exp", "利用")):
+        recommend = "【推荐】需求涉及漏洞利用 → 优先使用工具目录中的 fscan/nuclei 等"
+
     sys_prompt = (
         f"Role: {cfg['role']}\nGoal: {cfg['goal']}\nBackstory: {cfg['backstory']}\n"
         f"{COT_INSTRUCTION}\n"
@@ -798,7 +816,10 @@ def operator_node(state: PenTestState) -> PenTestState:
         "dirsearch/ffuf(目录爆破)、fscan(内网扫描)、nuclei(漏洞扫描)、"
         "hydra(弱口令)、gobuster(目录/子域)、nikto(Web扫描)、masscan(快速端口扫描)、"
         "wpscan(WordPress)、metasploit(漏洞利用)。若目录列表中出现这些工具名，"
-        "直接使用即可，无需怀疑其可用性。"
+        "直接使用即可，无需怀疑其可用性。\n"
+        + (recommend + "\n" if recommend else "")
+        + "【强制要求】先查看工具目录确认工具存在，再生成命令；"
+          "工具目录有匹配工具时必须使用工具，禁止自写脚本重复实现。"
     )
     task_prompt = (
         task["description"].format(target=state["target"])

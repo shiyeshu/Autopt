@@ -599,22 +599,22 @@ async def run_mission(
                     mission_history = mission_history[-10000:]  # 限制历史长度防上下文膨胀
 
             # 模块5(修复): 每轮保存完整上下文到历史（策略/命令/执行结果），
-            # 供历史查看与 RAG 收录（不再只存截断的执行结果）
+            # 供历史查看与 RAG 收录——保存完整内容不截断
             try:
                 if task_id:
                     round_parts = []
                     if round_state.get("strategy"):
-                        round_parts.append(f"策略: {round_state['strategy'][:800]}")
+                        round_parts.append(f"策略: {round_state['strategy']}")
                     if round_state.get("deputy_requirement"):
-                        round_parts.append(f"需求: {round_state['deputy_requirement'][:500]}")
+                        round_parts.append(f"需求: {round_state['deputy_requirement']}")
                     if round_state.get("operator_command"):
-                        round_parts.append(f"命令: {round_state['operator_command'][:800]}")
+                        round_parts.append(f"命令: {round_state['operator_command']}")
                     if round_state.get("execution_result"):
-                        round_parts.append(f"结果: {str(round_state['execution_result'])[:2000]}")
+                        round_parts.append(f"结果: {str(round_state['execution_result'])}")
                     if round_parts:
                         db.add_message(task_id, "assistant", "\n".join(round_parts), agent_name="任务轮次", round=i)
                         db.update_task(task_id, current_round=i)
-                    # 模块4: 提取资产（从完整结果而非截断）
+                    # 模块4: 提取资产（从完整结果）
                     _extract_assets_to_project(project_id, task_id, str(round_state.get("execution_result", "")))
             except Exception:
                 pass

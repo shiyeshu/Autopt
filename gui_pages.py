@@ -114,9 +114,12 @@ def history_page():
                     for m in msgs:
                         role_label = {"user": "用户", "assistant": "AI", "system": "系统", "tool": "工具"}.get(m["role"], m["role"])
                         color = "text-blue-600" if m["role"] == "user" else ("text-green-600" if m["role"] == "assistant" else "text-gray-500")
-                        with ui.row().classes("w-full gap-1"):
-                            ui.label(f"[{role_label}]").classes(f"text-xs font-bold {color}")
-                            ui.label(m["content"][:200]).classes(f"text-sm {color}").props("wrap")
+                        # 修复: 完整显示消息内容（不截断），默认折叠前300字，可展开全文
+                        content = m["content"]
+                        with ui.expansion(
+                            f"[{role_label}] {content[:80]}" + ("..." if len(content) > 80 else "")
+                        ).classes("w-full"):
+                            ui.label(content).classes(f"text-sm {color} whitespace-pre-wrap").props("wrap")
 
     def _resume(tid):
         # 问题2修复: 恢复会话时加载历史消息展示

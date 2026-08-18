@@ -36,3 +36,7 @@ skills/*.md.bak
 # 扫描结果临时目录
 recon_results/
 
+
+# 任务工作目录（AI生成的脚本/结果）
+task_workspace/
+
